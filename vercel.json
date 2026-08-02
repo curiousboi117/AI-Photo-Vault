@@ -1,9 +1,5 @@
 {
-  "outputDirectory": "artifacts/photo-platform/dist/public",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist/public"
 }
