@@ -1,0 +1,289 @@
+# Build a Production-Ready AI Photo Storage Platform
+
+You are an expert senior full-stack software engineer.
+
+Your task is to build a complete production-ready Google Photos-inspired web application from scratch.
+
+IMPORTANT:
+- Generate the entire project automatically.
+- Create all files and folders.
+- Install all required dependencies.
+- Configure everything.
+- Fix build errors automatically.
+- Ensure the project runs successfully inside Replit without manual fixes.
+- If an error occurs, debug it and continue until the app works.
+
+-------------------------------------------------
+TECH STACK
+-------------------------------------------------
+
+Frontend
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- React Router
+- TanStack Query
+- Framer Motion
+
+Backend
+- Node.js
+- Express
+- TypeScript
+
+Database
+- PostgreSQL
+- Prisma ORM
+
+Authentication
+- JWT Authentication
+- Google OAuth
+- bcrypt password hashing
+
+Storage
+- Cloudinary
+- Easy adapter for AWS S3
+- Easy adapter for Supabase Storage
+
+Image Processing
+- Sharp
+
+Deployment Ready
+- Replit Deployments
+- Docker support
+
+-------------------------------------------------
+MAIN FEATURES
+-------------------------------------------------
+
+Authentication
+- Register
+- Login
+- Logout
+- Google Login
+- Forgot Password
+- Reset Password
+- Email Verification
+- JWT Refresh Tokens
+
+Dashboard
+- Beautiful Google Photos style interface
+- Responsive design
+- Sidebar
+- Search
+- User profile
+- Dark mode
+- Light mode
+
+Photo Upload
+- Drag and Drop
+- Multiple uploads
+- Upload progress
+- Cancel upload
+- Resume upload
+- Thumbnail generation
+- Duplicate detection
+
+Gallery
+- Masonry layout
+- Infinite scrolling
+- Lazy loading
+- Fullscreen preview
+- Zoom
+- Slideshow
+
+Albums
+- Create
+- Rename
+- Delete
+- Share
+- Add photos
+- Remove photos
+
+Photo Management
+- Rename
+- Favorite
+- Archive
+- Trash
+- Restore
+- Download
+- Delete
+
+Search
+- Filename
+- Date
+- Tags
+- Album
+
+Metadata
+- Resolution
+- File size
+- EXIF
+- Camera model
+- Upload date
+
+Trash
+- Restore deleted files
+- Permanently delete
+- Auto delete after 30 days
+
+Settings
+- Change password
+- Profile picture
+- Storage usage
+- Theme
+
+Notifications
+- Upload complete
+- Upload failed
+- Delete success
+
+-------------------------------------------------
+AI FEATURES
+-------------------------------------------------
+
+Create architecture for:
+
+- AI auto-tagging
+- Face recognition
+- Image caption generation
+- OCR text extraction
+- Object detection
+
+Implement placeholder services so they can later connect to OpenAI or Google Gemini APIs.
+
+-------------------------------------------------
+DATABASE
+-------------------------------------------------
+
+Use Prisma.
+
+Tables
+
+Users
+Photos
+Albums
+AlbumPhotos
+Favorites
+Tags
+PhotoTags
+Trash
+Sessions
+
+Create complete schema.
+
+-------------------------------------------------
+API
+-------------------------------------------------
+
+Create REST APIs for
+
+/auth
+/photos
+/albums
+/users
+/search
+/favorites
+/trash
+
+Use proper HTTP status codes.
+
+Validate inputs.
+
+-------------------------------------------------
+SECURITY
+-------------------------------------------------
+
+Helmet
+CORS
+Rate limiting
+JWT refresh tokens
+Environment variables
+Input validation
+Password hashing
+SQL injection protection
+XSS protection
+
+-------------------------------------------------
+PERFORMANCE
+-------------------------------------------------
+
+Lazy loading
+Caching
+Pagination
+Infinite scroll
+Image optimization
+Thumbnail generation
+Code splitting
+
+-------------------------------------------------
+UI DESIGN
+-------------------------------------------------
+
+Modern minimalist design inspired by Google Photos.
+
+Use
+
+- Rounded corners
+- Smooth animations
+- Skeleton loaders
+- Empty states
+- Error pages
+- Beautiful dialogs
+- Glassmorphism where appropriate
+
+-------------------------------------------------
+PROJECT STRUCTURE
+-------------------------------------------------
+
+client/
+server/
+shared/
+prisma/
+public/
+
+Keep the architecture modular and scalable.
+
+-------------------------------------------------
+REPLIT REQUIREMENTS
+-------------------------------------------------
+
+Automatically:
+
+1. Install dependencies.
+
+2. Configure package.json.
+
+3. Configure Vite.
+
+4. Configure Tailwind.
+
+5. Configure Prisma.
+
+6. Configure Express.
+
+7. Configure environment variables.
+
+8. Generate .env.example.
+
+9. Generate README.md.
+
+10. Start the development server.
+
+11. Fix all compile/runtime errors until the project builds successfully.
+
+12. Never leave TODOs or incomplete placeholder code unless an API key is required.
+
+-------------------------------------------------
+DELIVERABLE
+-------------------------------------------------
+
+Produce a fully working application that can be launched directly in Replit.
+
+After finishing:
+
+- Explain the folder structure.
+- Explain how to add API keys.
+- Explain how to deploy using Replit Deployments.
+- Verify there are no build errors before considering the task complete.

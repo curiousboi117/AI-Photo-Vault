@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Photo Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: photos
+    description: Photo management
+  - name: albums
+    description: Album management
+  - name: trash
+    description: Trash management
+  - name: search
+    description: Search operations
+  - name: users
+    description: User profile and settings
+  - name: storage
+    description: Object storage upload and serving endpoints
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,621 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Photos ────────────────────────────────────────────────────────────────
+  /photos:
+    get:
+      operationId: listPhotos
+      tags: [photos]
+      summary: List photos for the current user
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: archived
+          in: query
+          schema: { type: boolean }
+        - name: favorited
+          in: query
+          schema: { type: boolean }
+        - name: albumId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoList"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    post:
+      operationId: createPhoto
+      tags: [photos]
+      summary: Register a photo after upload to object storage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoInput"
+      responses:
+        "201":
+          description: Photo created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /photos/stats:
+    get:
+      operationId: getPhotoStats
+      tags: [photos]
+      summary: Dashboard statistics for the current user
+      responses:
+        "200":
+          description: Photo statistics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhotoStats" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /photos/timeline:
+    get:
+      operationId: getPhotoTimeline
+      tags: [photos]
+      summary: Photos grouped by date for timeline view
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+      responses:
+        "200":
+          description: Timeline groups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimelineResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /photos/{id}:
+    get:
+      operationId: getPhoto
+      tags: [photos]
+      summary: Get a single photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Photo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    patch:
+      operationId: updatePhoto
+      tags: [photos]
+      summary: Update photo metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUpdate"
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    delete:
+      operationId: deletePhoto
+      tags: [photos]
+      summary: Move photo to trash
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Moved to trash
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /photos/{id}/tags:
+    post:
+      operationId: addPhotoTag
+      tags: [photos]
+      summary: Add a tag to a photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TagInput" }
+      responses:
+        "200":
+          description: Updated photo with tags
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /photos/{id}/tags/{tag}:
+    delete:
+      operationId: removePhotoTag
+      tags: [photos]
+      summary: Remove a tag from a photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: tag
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ─── Albums ────────────────────────────────────────────────────────────────
+  /albums:
+    get:
+      operationId: listAlbums
+      tags: [albums]
+      summary: List albums for the current user
+      responses:
+        "200":
+          description: List of albums
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Album" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    post:
+      operationId: createAlbum
+      tags: [albums]
+      summary: Create a new album
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlbumInput" }
+      responses:
+        "201":
+          description: Album created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Album" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /albums/{id}:
+    get:
+      operationId: getAlbum
+      tags: [albums]
+      summary: Get an album with its photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Album with photos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlbumDetail" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    patch:
+      operationId: updateAlbum
+      tags: [albums]
+      summary: Update album metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlbumUpdate" }
+      responses:
+        "200":
+          description: Updated album
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Album" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    delete:
+      operationId: deleteAlbum
+      tags: [albums]
+      summary: Delete an album (does not delete photos)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /albums/{id}/photos:
+    post:
+      operationId: addPhotosToAlbum
+      tags: [albums]
+      summary: Add photos to an album
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlbumPhotosInput" }
+      responses:
+        "200":
+          description: Updated album
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlbumDetail" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /albums/{id}/photos/{photoId}:
+    delete:
+      operationId: removePhotoFromAlbum
+      tags: [albums]
+      summary: Remove a photo from an album
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: photoId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ─── Trash ─────────────────────────────────────────────────────────────────
+  /trash:
+    get:
+      operationId: listTrash
+      tags: [trash]
+      summary: List trashed photos
+      responses:
+        "200":
+          description: Trashed photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Photo" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    delete:
+      operationId: emptyTrash
+      tags: [trash]
+      summary: Permanently delete all trashed photos
+      responses:
+        "204":
+          description: Trash emptied
+
+  /trash/{id}/restore:
+    post:
+      operationId: restorePhoto
+      tags: [trash]
+      summary: Restore a trashed photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Restored photo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Photo" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /trash/{id}:
+    delete:
+      operationId: permanentlyDeletePhoto
+      tags: [trash]
+      summary: Permanently delete a single trashed photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Permanently deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ─── Search ────────────────────────────────────────────────────────────────
+  /search/photos:
+    get:
+      operationId: searchPhotos
+      tags: [search]
+      summary: Search photos by filename, date, or tags
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Free-text search on filename and tags
+        - name: tag
+          in: query
+          schema: { type: string }
+          description: Filter by exact tag
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date }
+        - name: albumId
+          in: query
+          schema: { type: integer }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhotoList" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ─── Users ─────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserProfile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    patch:
+      operationId: updateCurrentUser
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserProfileUpdate" }
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserProfile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /users/me/storage:
+    get:
+      operationId: getUserStorageStats
+      tags: [users]
+      summary: Get storage usage statistics
+      responses:
+        "200":
+          description: Storage usage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageStats" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ─── Storage ───────────────────────────────────────────────────────────────
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Missing or invalid required fields
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "500":
+          description: Failed to generate upload URL
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [storage]
+      operationId: getPublicObject
+      summary: Serve a public asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema: { type: string, format: binary }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema: { type: string, format: binary }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +658,242 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # ─── Photos ──────────────────────────────────────────────────────────────
+    Photo:
+      type: object
+      required:
+        - id
+        - userId
+        - filename
+        - objectPath
+        - mimeType
+        - fileSize
+        - width
+        - height
+        - isFavorited
+        - isArchived
+        - isTrashed
+        - tags
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        filename: { type: string }
+        objectPath: { type: string }
+        thumbnailPath: { type: ["string", "null"] }
+        mimeType: { type: string }
+        fileSize: { type: integer }
+        width: { type: integer }
+        height: { type: integer }
+        isFavorited: { type: boolean }
+        isArchived: { type: boolean }
+        isTrashed: { type: boolean }
+        trashedAt: { type: ["string", "null"], format: date-time }
+        caption: { type: ["string", "null"] }
+        aiTags: { type: ["string", "null"] }
+        exifData: { type: ["string", "null"] }
+        tags: { type: array, items: { type: string } }
+        albums: { type: array, items: { $ref: "#/components/schemas/AlbumRef" } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    PhotoInput:
+      type: object
+      required: [filename, objectPath, mimeType, fileSize, width, height]
+      properties:
+        filename: { type: string, minLength: 1 }
+        objectPath: { type: string, minLength: 1 }
+        thumbnailPath: { type: string }
+        mimeType: { type: string, minLength: 1 }
+        fileSize: { type: integer, minimum: 1 }
+        width: { type: integer, minimum: 1 }
+        height: { type: integer, minimum: 1 }
+        caption: { type: string }
+        exifData: { type: string }
+
+    PhotoUpdate:
+      type: object
+      properties:
+        filename: { type: string, minLength: 1 }
+        isFavorited: { type: boolean }
+        isArchived: { type: boolean }
+        caption: { type: string }
+
+    PhotoList:
+      type: object
+      required: [photos, total, page, limit]
+      properties:
+        photos:
+          type: array
+          items: { $ref: "#/components/schemas/Photo" }
+        total: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+
+    PhotoStats:
+      type: object
+      required:
+        - totalPhotos
+        - totalFavorited
+        - totalArchived
+        - totalInTrash
+        - totalStorageBytes
+        - totalAlbums
+        - recentUploads
+        - uploadsByMonth
+      properties:
+        totalPhotos: { type: integer }
+        totalFavorited: { type: integer }
+        totalArchived: { type: integer }
+        totalInTrash: { type: integer }
+        totalStorageBytes: { type: integer }
+        totalAlbums: { type: integer }
+        recentUploads:
+          type: array
+          items: { $ref: "#/components/schemas/Photo" }
+        uploadsByMonth:
+          type: array
+          items: { $ref: "#/components/schemas/MonthCount" }
+
+    MonthCount:
+      type: object
+      required: [month, count]
+      properties:
+        month: { type: string }
+        count: { type: integer }
+
+    TimelineGroup:
+      type: object
+      required: [date, photos]
+      properties:
+        date: { type: string }
+        photos:
+          type: array
+          items: { $ref: "#/components/schemas/Photo" }
+
+    TimelineResponse:
+      type: object
+      required: [groups, total]
+      properties:
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/TimelineGroup" }
+        total: { type: integer }
+
+    TagInput:
+      type: object
+      required: [tag]
+      properties:
+        tag: { type: string, minLength: 1 }
+
+    # ─── Albums ──────────────────────────────────────────────────────────────
+    AlbumRef:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+
+    Album:
+      type: object
+      required: [id, userId, name, photoCount, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        coverObjectPath: { type: ["string", "null"] }
+        photoCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AlbumDetail:
+      type: object
+      required: [id, userId, name, photoCount, photos, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        coverObjectPath: { type: ["string", "null"] }
+        photoCount: { type: integer }
+        photos:
+          type: array
+          items: { $ref: "#/components/schemas/Photo" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AlbumInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+
+    AlbumUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        coverObjectPath: { type: string }
+
+    AlbumPhotosInput:
+      type: object
+      required: [photoIds]
+      properties:
+        photoIds:
+          type: array
+          items: { type: integer }
+
+    # ─── Users ───────────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, clerkUserId, email, createdAt]
+      properties:
+        id: { type: integer }
+        clerkUserId: { type: string }
+        email: { type: string }
+        displayName: { type: ["string", "null"] }
+        avatarObjectPath: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        displayName: { type: string }
+        avatarObjectPath: { type: string }
+
+    StorageStats:
+      type: object
+      required: [totalBytes, photoCount, limitBytes]
+      properties:
+        totalBytes: { type: integer }
+        photoCount: { type: integer }
+        limitBytes: { type: integer }
+
+    # ─── Storage ─────────────────────────────────────────────────────────────
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string, minLength: 1 }
+        size: { type: integer, minimum: 1 }
+        contentType: { type: string, minLength: 1 }
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string }
+        objectPath: { type: string }
+        metadata: { $ref: "#/components/schemas/UploadUrlRequest" }

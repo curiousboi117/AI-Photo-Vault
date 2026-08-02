@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "AI Photo Platform"
+version = "1.0.0"
+id = "artifacts/photo-platform"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20103
+
+[services.development]
+run = "pnpm --filter @workspace/photo-platform run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/photo-platform", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/photo-platform/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20103"
+BASE_PATH = "/"
